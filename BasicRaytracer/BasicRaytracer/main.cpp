@@ -64,7 +64,7 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 	f = fopen(filename, "wb");
 
 	fwrite(bmpfileheader, 1, 14, f);
-	fwrite(bmpfileheader, 1, 40, f);
+	fwrite(bmpinfoheader, 1, 40, f);
 
 	for (int i = 0; i < k; i++) {
 		RGBType rgb = data[i];
@@ -75,7 +75,6 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 
 		unsigned char color[3] = { (int)floor(blue), (int)floor(green), (int)floor(red) };
 		fwrite(color, 1, 3, f);
-
 	}
 
 	fclose(f);
