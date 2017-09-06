@@ -13,6 +13,8 @@
 #include "Ray.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Sphere.h"
+#include "Plane.h"
 
 struct RGBType {
 	double r; 
@@ -89,7 +91,7 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 int main()
 {
 	std::cout << "Rendering" << std::endl;
-
+	std::cout << "Size of pixel array: " << sizeof(RGBType) * 640 * 480 << std::endl;
 	int dpi = 72;
 	int width = 640;
 	int height = 480;
@@ -99,11 +101,12 @@ int main()
 	// Array of pixel colors to use for writing to the image.
 	RGBType* pixels = new RGBType[n];
 
+	Vect origin(0, 0, 0);
 	Vect X(1, 0, 0);
 	Vect Y(0, 1, 0);
 	Vect Z(0, 0, 1);
 
-	// Abritrary camera position
+	// Abritrary camera starting position
 	Vect campos(3, 1.5, -4);
 
 	// Position that the camera is looking at.
@@ -130,17 +133,22 @@ int main()
 	Color fancyGreen(0.5, 1.0, 0.5, 0.3);
 	Color gray(0.5, 0.5, 0.5, 0);
 	Color black(0, 0, 0, 0);
+	Color maroon(0.5, 0.25, 0.25, 0);
 
 	// Set up our scene light
 	Vect lightPosition(-7, 10, -10);
 	Light sceneLight(lightPosition, lightColor);
 
+	// Make a sphere
+	Sphere sphere(origin, 1, fancyGreen);
+
+	// Make a plane
+	Plane plane(Y, -1, maroon);
 
 	// Write each pixel color to the corrosponding pixel.
 	for (int x = 0; x < width; x++) {
 		for (int y = 0; y < height; y++) {
 			thisone = y*width + x;
-
 			pixels[thisone].r = 0.2;
 			pixels[thisone].g = 0.9;
 			pixels[thisone].b = 0.1;
