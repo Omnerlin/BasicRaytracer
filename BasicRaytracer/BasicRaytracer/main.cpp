@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "Ray.h"
+#include "Camera.h"
+#include "Light.h"
+
 struct RGBType {
 	double r; 
 	double g;
@@ -84,7 +88,7 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 
 int main()
 {
-	std::cout << "Hey there" << std::endl;
+	std::cout << "Rendering" << std::endl;
 
 	int dpi = 72;
 	int width = 640;
@@ -92,9 +96,47 @@ int main()
 	int n = width*height;
 	int thisone;
 
-	RGBType *pixels = new RGBType[n];
+	// Array of pixel colors to use for writing to the image.
+	RGBType* pixels = new RGBType[n];
+
+	Vect X(1, 0, 0);
+	Vect Y(0, 1, 0);
+	Vect Z(0, 0, 1);
+
+	// Abritrary camera position
+	Vect campos(3, 1.5, -4);
+
+	// Position that the camera is looking at.
+	Vect lookAt(0, 0, 0);
+
+	// Difference in position between where the camera is and it's subject
+	Vect diffBetween( 
+		campos.getX() - lookAt.getX(),
+		campos.getY() - lookAt.getY(),
+		campos.getZ() - lookAt.getZ()
+	);
+
+	// Find the direction of the camera based on the difference 
+	// between where is is and what it is looking at.
+	Vect camdir = diffBetween.negative().normalize();
+	Vect camright = Y.crossProduct(camdir).normalize();
+	Vect camdown = camright.crossProduct(camdir);
+
+	// Create the scene camera
+	Camera scene_cam(campos, camdir, camright, camdown);
+
+	// Create some colors we want to use
+	Color lightColor(1.0, 1.0, 1.0, 0);
+	Color fancyGreen(0.5, 1.0, 0.5, 0.3);
+	Color gray(0.5, 0.5, 0.5, 0);
+	Color black(0, 0, 0, 0);
+
+	// Set up our scene light
+	Vect lightPosition(-7, 10, -10);
+	Light sceneLight(lightPosition, lightColor);
 
 
+	// Write each pixel color to the corrosponding pixel.
 	for (int x = 0; x < width; x++) {
 		for (int y = 0; y < height; y++) {
 			thisone = y*width + x;
@@ -105,6 +147,7 @@ int main()
 		}
 	}
 
+	// Save Pixel data to a bitmap
 	savebmp("scene.bmp", width, height, dpi, pixels);
 	delete[] pixels;
 	return 0;
