@@ -15,4 +15,9 @@ public:
 
 
 	Vect getCenter() { return center; }
+	double getRadius() { return radius; }
+	Color getColor() { return color; }
+	
+	Vect getNormalAt(Vect point);
+	double findIntersection(Ray ray);
 };

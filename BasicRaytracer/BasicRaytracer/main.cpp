@@ -95,8 +95,9 @@ int main()
 	int dpi = 72;
 	int width = 640;
 	int height = 480;
+	double aspectRatio = (double)width / (double)height;
 	int n = width*height;
-	int thisone;
+	int thisone; // Used for telling which pixel we are manipulating 
 
 	// Array of pixel colors to use for writing to the image.
 	RGBType* pixels = new RGBType[n];
@@ -145,10 +146,47 @@ int main()
 	// Make a plane
 	Plane plane(Y, -1, maroon);
 
+	// Put our objects into an array.
+	std::vector<Object*> sceneObjects;
+	sceneObjects.push_back(dynamic_cast<Object*>(&sphere));
+	sceneObjects.push_back(dynamic_cast<Object*>(&plane));
+
+	double xamnt, yamnt;
+
 	// Write each pixel color to the corrosponding pixel.
 	for (int x = 0; x < width; x++) {
 		for (int y = 0; y < height; y++) {
 			thisone = y*width + x;
+
+			// start with no anti-aliasing
+			if (width > height) {
+				// the image is wider than it is tall
+				xamnt = ((x + 0.5) / width) * aspectRatio - (((width - height) / (double)height) / 2);
+				yamnt = ((height - y) + 0.5) / height;
+			}
+			else if (height > width) {
+				// The image is taller than it is wide.
+				xamnt = (x + 0.5) / width;
+				yamnt = (((height - y) + 0.5) / height) / aspectRatio - (((height - width) / (double)width) / 2);
+			}
+			else {
+				// the image is square
+				xamnt = (x + 0.5) / width;
+				yamnt = ((height - y) + 0.5) / height;
+			}
+
+
+			Vect camRayOrigin = scene_cam.getPosition();
+			Vect camRayDirection = camdir.add(camright.multiply(xamnt - 0.5).add(camdown.multiply(yamnt - 0.5))).normalize();
+
+			Ray camRay(camRayOrigin, camRayDirection);
+
+			// our container of intersections 
+			std::vector<double> intersections;
+			for (int i = 0; i < sceneObjects.size(); i++) {
+				intersections.push_back(sceneObjects.at(i)->findIntersection(camRay));
+			}
+
 			pixels[thisone].r = 0.2;
 			pixels[thisone].g = 0.9;
 			pixels[thisone].b = 0.1;
