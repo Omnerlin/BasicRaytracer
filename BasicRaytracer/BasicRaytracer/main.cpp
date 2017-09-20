@@ -17,7 +17,7 @@
 #include "Plane.h"
 
 struct RGBType {
-	double r; 
+	double r;
 	double g;
 	double b;
 };
@@ -86,7 +86,53 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 	fclose(f);
 }
 
+int getWinningObjectIndex(std::vector<double> objectIntersections)
+{
+	// find and return the index of the winning intersection
+	int indexOfMin;
 
+	// prevent unecessary calculations
+	if (objectIntersections.size() == 0) {
+		// if there are no intersections
+		return -1;
+	}
+
+	else if (objectIntersections.size() == 1) {
+		if (objectIntersections.at(0) > 0) {
+			// if that intersection is greater than zero then it's our index of minimum value
+			return 0;
+		}
+		else {
+			// otherwise the only intersection value is negative (ray missed everything)
+			return -1;
+		}
+	}
+	else {
+		// otherwise there is more than one intersection 
+		// need to find the maximum distance first.
+		double max = 0;
+		for (int i = 0; i < objectIntersections.size(); i++) {
+			if (max < objectIntersections.at(i)) {
+				max = objectIntersections.at(i);
+			}
+		}
+		// then starting from the maximum value find the minimum
+		if (max > 0) {
+			// we only want positive intersects
+			for (int i = 0; i < objectIntersections.size(); i++) {
+				if (objectIntersections.at(i) > 0 && objectIntersections.at(i) <= max) {
+					max = objectIntersections.at(i);
+					indexOfMin = i;
+				}
+			}
+			return indexOfMin;
+		}
+		else {
+			// all of the intersections were negative
+			return -1;
+		}
+	}
+}
 
 int main()
 {
@@ -186,6 +232,8 @@ int main()
 			for (int i = 0; i < sceneObjects.size(); i++) {
 				intersections.push_back(sceneObjects.at(i)->findIntersection(camRay));
 			}
+
+			int indexOfWinningObject = getWinningObjectIndex(intersections);
 
 			pixels[thisone].r = 0.2;
 			pixels[thisone].g = 0.9;
