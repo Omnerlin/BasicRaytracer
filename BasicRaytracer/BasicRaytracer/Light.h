@@ -1,8 +1,9 @@
 #pragma once
 #include "Vect.h"
 #include "Color.h"
+#include "Source.h"
 
-class Light 
+class Light : public Source
 {
 private:
 	Vect position;

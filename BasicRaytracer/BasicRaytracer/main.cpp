@@ -79,7 +79,7 @@ void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
 		double green = (data[i].g) * 255;
 		double blue = (data[i].b) * 255;
 
-		unsigned char color[3] = { (int)floor(blue), (int)floor(green), (int)floor(red) };
+		unsigned char color[3] = { (unsigned char)floor(blue), (unsigned char)floor(green), (unsigned char)floor(red) };
 		fwrite(color, 1, 3, f);
 	}
 
@@ -111,7 +111,7 @@ int getWinningObjectIndex(std::vector<double> objectIntersections)
 		// otherwise there is more than one intersection 
 		// need to find the maximum distance first.
 		double max = 0;
-		for (int i = 0; i < objectIntersections.size(); i++) {
+		for (unsigned int i = 0; i < objectIntersections.size(); i++) {
 			if (max < objectIntersections.at(i)) {
 				max = objectIntersections.at(i);
 			}
@@ -119,7 +119,7 @@ int getWinningObjectIndex(std::vector<double> objectIntersections)
 		// then starting from the maximum value find the minimum
 		if (max > 0) {
 			// we only want positive intersects
-			for (int i = 0; i < objectIntersections.size(); i++) {
+			for (unsigned int i = 0; i < objectIntersections.size(); i++) {
 				if (objectIntersections.at(i) > 0 && objectIntersections.at(i) <= max) {
 					max = objectIntersections.at(i);
 					indexOfMin = i;
@@ -134,17 +134,83 @@ int getWinningObjectIndex(std::vector<double> objectIntersections)
 	}
 }
 
+Color getColorAt(Vect intersectionPosition, Vect intersectingRayDirection, std::vector<Object*> &sceneObjects, 
+	int indexOfWinningObject, std::vector<Source*> &lightSources, double accuracy, double ambientLight) {
+
+	Color winningObjectColor = sceneObjects[indexOfWinningObject]->getColor();
+	Vect winningObjectNormal = sceneObjects[indexOfWinningObject]->getNormalAt(intersectionPosition);
+	Color finalColor = winningObjectColor.colorScalar(ambientLight);
+
+	for (unsigned int i = 0; i < lightSources.size(); i++) {
+		Vect lightDirection = lightSources[i]->getPosition().add(intersectionPosition.negative()).normalize();
+		float cosineAngle = (float)winningObjectNormal.dotProduct(lightDirection);
+
+		if (cosineAngle > 0) {
+			// Test for shadows
+			bool shadowed = false;
+			Vect distanceToLight = lightSources[i]->getPosition().add(intersectionPosition.negative()).normalize();
+			float distanceToLightMagnitude = (float)distanceToLight.magnitude();
+
+			// Cast a secondary ray from the intersection point toward the light.
+			// If it intersects with anything before making it back to the light,
+			// Our base intersection is in shadow.
+			Ray shadowRay(intersectionPosition, lightSources[i]->getPosition());
+			std::vector<double> secondaryIntersections;
+			for (unsigned int j = 0; j < secondaryIntersections.size() && shadowed == false; j++) {
+				secondaryIntersections.push_back(sceneObjects[j]->findIntersection(shadowRay));
+			}
+			
+			// Loop through all secondary intersection tests to see if secondary intersection occurred
+			for (unsigned int k = 0; k < secondaryIntersections.size(); k++) {
+				if (secondaryIntersections[k] > accuracy) {
+					if (secondaryIntersections[k] <= distanceToLightMagnitude) {
+						shadowed = true;
+					}
+				}
+				break;
+			}
+			if (!shadowed) {
+				finalColor = finalColor.colorAdd(winningObjectColor.colorMult(lightSources[i]->getColor()).colorScalar(cosineAngle));
+
+				if (winningObjectColor.Special() > 0 && winningObjectColor.Special() <= 1) {
+					// special 0-1 refers to shininess.
+					double dot1 = winningObjectNormal.dotProduct(intersectingRayDirection.negative());
+					Vect scalar1 = winningObjectNormal.multiply(dot1);
+					Vect add1 = scalar1.add(intersectingRayDirection);
+					Vect scalar2 = add1.multiply(2);
+					Vect add2 = intersectingRayDirection.negative().add(scalar2);
+					Vect reflectionDirection = add2.normalize();
+
+					double specular = reflectionDirection.dotProduct(lightDirection);
+
+					if (specular > 0) {
+						specular = pow(specular, 10);
+						finalColor = finalColor.colorAdd(lightSources[i]->getColor().colorScalar(specular*winningObjectColor.Special()));
+					}
+				}
+			}
+
+		}
+		return finalColor.clip();
+	}
+
+	return Color();
+}
+
 int main()
 {
 	std::cout << "Rendering" << std::endl;
 	std::cout << "Size of pixel array: " << sizeof(RGBType) * 640 * 480 << std::endl;
 	int dpi = 72;
-	int width = 640;
-	int height = 480;
+	unsigned int width = 640;
+	unsigned int height = 480;
 	double aspectRatio = (double)width / (double)height;
 	int n = width*height;
 	int thisone; // Used for telling which pixel we are manipulating 
 
+
+	double ambientLight = 0.2;
+	double accuracy = 0.000001;
 	// Array of pixel colors to use for writing to the image.
 	RGBType* pixels = new RGBType[n];
 
@@ -192,16 +258,20 @@ int main()
 	// Make a plane
 	Plane plane(Y, -1, maroon);
 
-	// Put our objects into an array.
+	// Create a vector that contains our scene objects
 	std::vector<Object*> sceneObjects;
 	sceneObjects.push_back(dynamic_cast<Object*>(&sphere));
 	sceneObjects.push_back(dynamic_cast<Object*>(&plane));
 
+	// Create a vector that contains our light sources
+	std::vector<Source*> lightSources;
+	lightSources.push_back(dynamic_cast<Source*>(&sceneLight));
+
 	double xamnt, yamnt;
 
 	// Write each pixel color to the corrosponding pixel.
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
+	for (unsigned int x = 0; x < width; x++) {
+		for (unsigned int y = 0; y < height; y++) {
 			thisone = y*width + x;
 
 			// start with no anti-aliasing
@@ -229,15 +299,38 @@ int main()
 
 			// our container of intersections 
 			std::vector<double> intersections;
-			for (int i = 0; i < sceneObjects.size(); i++) {
+			for (unsigned int i = 0; i < sceneObjects.size(); i++) {
 				intersections.push_back(sceneObjects.at(i)->findIntersection(camRay));
 			}
 
 			int indexOfWinningObject = getWinningObjectIndex(intersections);
 
-			pixels[thisone].r = 0.2;
-			pixels[thisone].g = 0.9;
-			pixels[thisone].b = 0.1;
+			if (indexOfWinningObject == -1) {
+				// Nothing was hit. Color the background black.
+				pixels[thisone].r = 0;
+				pixels[thisone].g = 0;
+				pixels[thisone].b = 0;
+			}
+			else
+			{
+				if (intersections[indexOfWinningObject] > accuracy) {
+
+					// Set the color of the pixel to the color of the intersection
+
+					Vect intersectionPosition = camRayOrigin.add(camRayDirection.multiply(intersections[indexOfWinningObject]));
+					Vect intersectingRayDirection = camRayDirection;
+
+
+					Color intersectionColor = getColorAt(intersectionPosition, intersectingRayDirection,
+						sceneObjects, indexOfWinningObject, lightSources, accuracy, ambientLight);
+
+					pixels[thisone].r = intersectionColor.Red();
+					pixels[thisone].g = intersectionColor.Green();
+					pixels[thisone].b = intersectionColor.Blue();
+				}
+			}
+
+
 		}
 	}
 

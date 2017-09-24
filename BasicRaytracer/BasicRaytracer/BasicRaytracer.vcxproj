@@ -150,6 +150,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="Source.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="Vect.h" />
   </ItemGroup>

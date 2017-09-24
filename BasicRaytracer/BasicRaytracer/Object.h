@@ -5,9 +5,13 @@
 class Object
 {
 public:
-	Color getColor() { return Color(0.0, 0.0, 0.0, 0.0); }
+	virtual Color getColor() { return Color(0.0, 0.0, 0.0, 0.0); }
 
-	double findIntersection(Ray ray) {
+	virtual Vect getNormalAt(Vect point) {
+		return Vect();
+	}
+
+	virtual double findIntersection(Ray ray) {
 		return 0;
 	}
 

@@ -12,13 +12,13 @@ private:
 public:
 	Vect getNormal() { return normal; }
 	double getDistance() { return distance; }
-	Color getColor() { return color; }
+	virtual Color getColor() { return color; }
 
-	Vect getNormalAt(Vect point) {
+	Vect getNormalAt(Vect point) override {
 		return normal;
 	}
 
-	double findIntersection(Ray ray) {
+	virtual double findIntersection(Ray ray) {
 		Vect rayDirection = ray.getDirection();
 
 		double a = rayDirection.dotProduct(normal);
