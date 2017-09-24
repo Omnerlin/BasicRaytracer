@@ -14,7 +14,7 @@ public:
 	double getDistance() { return distance; }
 	virtual Color getColor() { return color; }
 
-	Vect getNormalAt(Vect point) override {
+	virtual Vect getNormalAt(Vect point) {
 		return normal;
 	}
 

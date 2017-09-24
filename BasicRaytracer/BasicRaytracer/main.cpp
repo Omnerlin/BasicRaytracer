@@ -154,9 +154,11 @@ Color getColorAt(Vect intersectionPosition, Vect intersectingRayDirection, std::
 			// Cast a secondary ray from the intersection point toward the light.
 			// If it intersects with anything before making it back to the light,
 			// Our base intersection is in shadow.
-			Ray shadowRay(intersectionPosition, lightSources[i]->getPosition());
+			Ray shadowRay(intersectionPosition, lightSources[i]->getPosition().add(intersectionPosition.negative()).normalize());
+
 			std::vector<double> secondaryIntersections;
-			for (unsigned int j = 0; j < secondaryIntersections.size() && shadowed == false; j++) {
+
+			for (unsigned int j = 0; j < sceneObjects.size() && shadowed == false; j++) {
 				secondaryIntersections.push_back(sceneObjects[j]->findIntersection(shadowRay));
 			}
 			
@@ -233,7 +235,7 @@ int main()
 	);
 
 	// Find the direction of the camera based on the difference 
-	// between where is is and what it is looking at.
+	// between where it is and what it is looking at.
 	Vect camdir = diffBetween.negative().normalize();
 	Vect camright = Y.crossProduct(camdir).normalize();
 	Vect camdown = camright.crossProduct(camdir);
