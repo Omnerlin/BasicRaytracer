@@ -5,22 +5,45 @@
 #include <vector>
 #include <cmath>
 #include <limits>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-#include "Ray.h"
-#include "Camera.h"
-#include "Light.h"
-#include "Sphere.h"
-#include "Plane.h"
 
-struct RGBType {
-	double r;
-	double g;
-	double b;
-};
+#include "RayTracer.h"
+
+int doStuff() {
+	Raytracer tracer(1920, 1080, 72);
+
+	// Create some colors we want to use
+	Color lightColor(1.0, 1.0, 1.0, 0);
+	Color fancyGreen(0.5, 1.0, 0.5, 0.3);
+	Color gray(0.5, 0.5, 0.5, 0);
+	Color black(0, 0, 0, 0);
+	Color maroon(0.5, 0.25, 0.25, 0);
+
+	// Set up our scene light
+	Vect lightPosition(-7, 10, -10);
+	Light sceneLight(lightPosition, lightColor);
+
+	// Make a sphere
+	Sphere sphere(Vect(0, 0, 0), 1, fancyGreen);
+
+	// Make a plane
+	Plane plane(Vect(0, 1, 0), -1, maroon);
+
+	// Create a vector that contains our scene objects
+	tracer.addSceneObject(dynamic_cast<Object*>(&sphere));
+	tracer.addSceneObject(dynamic_cast<Object*>(&plane));
+
+	tracer.addLight(dynamic_cast<Source*>(&sceneLight));
+
+	tracer.setCameraPosition(Vect(5, 1.5, 0));
+	tracer.renderImageToBuffer();
+	tracer.saveImageToFile("Test2.bmp");
+
+	return 0;
+}
 
 
 void savebmp(const char* filename, int w, int h, int dpi, RGBType* data) {
@@ -193,23 +216,23 @@ Color getColorAt(Vect intersectionPosition, Vect intersectingRayDirection, std::
 			}
 
 		}
-		return finalColor.clip();
 	}
-
-	return Color();
+	return finalColor.clip();
 }
 
 
 
 int main()
 {
+	doStuff();
+	/*
 	std::cout << "Rendering" << std::endl;
 	int dpi = 72;
 	unsigned int width = 1920;
 	unsigned int height = 1080;
 	double aspectRatio = (double)width / (double)height;
 	int n = width*height;
-	int thisone; // Used for telling which pixel we are manipulating 
+	int currentPixel; // Used for telling which pixel we are manipulating 
 
 
 	double ambientLight = 0.2;
@@ -271,10 +294,11 @@ int main()
 	lightSources.push_back(dynamic_cast<Source*>(&sceneLight));
 
 	double xamnt, yamnt;
+
 	// Write each pixel color to the corrosponding pixel.
 	for (unsigned int x = 0; x < width; x++) {
 		for (unsigned int y = 0; y < height; y++) {
-			thisone = y*width + x;
+			currentPixel = y*width + x;
 
 			// start with no anti-aliasing
 			if (width > height) {
@@ -309,26 +333,24 @@ int main()
 
 			if (indexOfWinningObject == -1) {
 				// Nothing was hit. Color the background black.
-				pixels[thisone].r = 0;
-				pixels[thisone].g = 0;
-				pixels[thisone].b = 0;
+				pixels[currentPixel].r = 0;
+				pixels[currentPixel].g = 0;
+				pixels[currentPixel].b = 0;
 			}
 			else
 			{
 				if (intersections[indexOfWinningObject] > accuracy) {
 
 					// Set the color of the pixel to the color of the intersection
-
 					Vect intersectionPosition = camRayOrigin.add(camRayDirection.multiply(intersections[indexOfWinningObject]));
 					Vect intersectingRayDirection = camRayDirection;
-
 
 					Color intersectionColor = getColorAt(intersectionPosition, intersectingRayDirection,
 						sceneObjects, indexOfWinningObject, lightSources, accuracy, ambientLight);
 
-					pixels[thisone].r = intersectionColor.Red();
-					pixels[thisone].g = intersectionColor.Green();
-					pixels[thisone].b = intersectionColor.Blue();
+					pixels[currentPixel].r = intersectionColor.Red();
+					pixels[currentPixel].g = intersectionColor.Green();
+					pixels[currentPixel].b = intersectionColor.Blue();
 				}
 			}
 		}
@@ -337,6 +359,7 @@ int main()
 	// Save Pixel data to a bitmap
 	savebmp("scene.bmp", width, height, dpi, pixels);
 	delete[] pixels;
+	*/
 	return 0;
 }
 
