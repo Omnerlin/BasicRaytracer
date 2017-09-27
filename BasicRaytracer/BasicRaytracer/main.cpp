@@ -199,13 +199,14 @@ Color getColorAt(Vect intersectionPosition, Vect intersectingRayDirection, std::
 	return Color();
 }
 
+
+
 int main()
 {
 	std::cout << "Rendering" << std::endl;
-	std::cout << "Size of pixel array: " << sizeof(RGBType) * 640 * 480 << std::endl;
 	int dpi = 72;
-	unsigned int width = 640;
-	unsigned int height = 480;
+	unsigned int width = 1920;
+	unsigned int height = 1080;
 	double aspectRatio = (double)width / (double)height;
 	int n = width*height;
 	int thisone; // Used for telling which pixel we are manipulating 
@@ -270,7 +271,6 @@ int main()
 	lightSources.push_back(dynamic_cast<Source*>(&sceneLight));
 
 	double xamnt, yamnt;
-
 	// Write each pixel color to the corrosponding pixel.
 	for (unsigned int x = 0; x < width; x++) {
 		for (unsigned int y = 0; y < height; y++) {
@@ -331,8 +331,6 @@ int main()
 					pixels[thisone].b = intersectionColor.Blue();
 				}
 			}
-
-
 		}
 	}
 
@@ -341,3 +339,5 @@ int main()
 	delete[] pixels;
 	return 0;
 }
+
+
